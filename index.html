@@ -117,6 +117,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <span class="sval orange" id="v-cut">0°</span>
       </div>
     </div>
+    <div class="readout">
+      <div class="ri"><div class="ri-lbl">Aim point</div><div class="ri-val orange" id="r-aim">0%</div></div>
+      <div class="ri"><div class="ri-lbl">Ball fraction</div><div class="ri-val green" id="r-frc">full ball</div></div>
+      <div class="ri"><div class="ri-lbl">Cut angle</div><div class="ri-val yellow" id="r-ang">0°</div></div>
+    </div>
+    <div class="comp-row" style="margin-bottom:6px;">
+      Adjustment: <span class="comp-val" id="r-throw" style="color:#fff">none</span>
+    </div>
     <div class="sgroup">
       <div class="sgroup-title">Speed — affects how much throw occurs
         <button id="speed-toggle" onclick="toggleSpeed()" style="float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:#3a7a3a;color:#fff;">ON</button>
@@ -149,14 +157,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:left">far</span>
         <span class="sval" id="v-dist" style="color:rgba(255,255,255,0.7)">2 ft</span>
       </div>
-    </div>
-    <div class="readout">
-      <div class="ri"><div class="ri-lbl">Aim point</div><div class="ri-val orange" id="r-aim">0%</div></div>
-      <div class="ri"><div class="ri-lbl">Ball fraction</div><div class="ri-val green" id="r-frc">full ball</div></div>
-      <div class="ri"><div class="ri-lbl">Cut angle</div><div class="ri-val yellow" id="r-ang">0°</div></div>
-    </div>
-    <div class="comp-row">
-      Speed & spin adjustment: <span class="comp-val" id="r-throw" style="color:#fff">none</span>
     </div>
   </div>
 </div>
@@ -208,10 +208,15 @@ function compute(){
 
   // Squirt: realistic 0.5° per tip, capped at 5ft effective distance (beyond that
   // you're compensating by feel anyway), and capped at ±25% of a ball width.
+  // Also fade out squirt as cut angle increases past 60° — at steep angles
+  // squirt math breaks down and the shot geometry dominates.
   var squirtAngle = spin * 0.5 * RAD;
   var effectiveDist = distEnabled ? Math.min(distIn, 60) : 0;
   var squirtDrift = effectiveDist * Math.tan(squirtAngle);
-  var squirtFraction = Math.max(-0.25, Math.min(0.25, squirtDrift / 2.25));
+  var squirtRaw = squirtDrift / 2.25;
+  // Fade squirt to zero as cut angle climbs past 55% of slider (≈33°) toward 85%
+  var squirtFade = cutRaw < 0.005 ? 0 : Math.max(0, Math.min(1, 1 - (cutRaw - 0.55) / 0.30));
+  var squirtFraction = Math.max(-0.25, Math.min(0.25, squirtRaw * squirtFade));
 
   // At near-90° the shot is a miss regardless — suppress compensation math
   var atExtreme = cutRaw > 0.97;
@@ -264,6 +269,12 @@ function drawTop(d){
   // Cue ball first (underneath), then red ball on top
   out+='<circle cx="'+ccx+'" cy="'+ccy+'" r="'+r+'" fill="url(#CGT)" stroke="#aaa" stroke-width="1.2"/>';
   out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGT)" stroke="#7a1010" stroke-width="1.2"/>';
+
+  // Orange cut angle badge — bottom-left, mirrors % badge position in bottom view
+  var badgeX=44, badgeY=H-14;
+  out+='<rect x="'+(badgeX-40)+'" y="'+(badgeY-26)+'" width="80" height="34" rx="7" fill="#e87030"/>';
+  out+='<text x="'+badgeX+'" y="'+(badgeY-4)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="white">'+Zdeg+'°</text>';
+
   out+='<text x="'+(W-8)+'" y="'+(H-8)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">BIRD\'S EYE</text>';
 
   document.getElementById('topsvg').innerHTML=out;
@@ -358,8 +369,15 @@ function update(){
     throwEl.textContent='none'; throwEl.style.color='#fff';
   } else {
     var parts=[];
-    if(Math.abs(td)>=1) parts.push('throw '+(td>0?'+':'')+td+'%');
-    if(Math.abs(sq)>=1) parts.push('squirt '+(sq>0?'−':'+')+Math.abs(sq)+'%');
+    if(Math.abs(td)>=1){
+      var throwDir = td>0 ? 'aim thinner' : 'aim fuller';
+      parts.push('throw: '+throwDir+' '+(td>0?'+':'')+td+'%');
+    }
+    if(Math.abs(sq)>=1){
+      // squirtFraction>0 means aim point is reduced (thinner); <0 means fuller
+      var squirtDir = sq>0 ? 'aim fuller' : 'aim thinner';
+      parts.push('squirt: '+squirtDir+' '+Math.abs(sq)+'%');
+    }
     throwEl.textContent=parts.join('  ·  ');
     throwEl.style.color='#e8a050';
   }
@@ -398,22 +416,40 @@ if('serviceWorker' in navigator){
      background:#0e260e;overflow-y:auto;flex-direction:column;align-items:center;padding:24px 20px 48px;">
 
   <!-- Close button -->
-  <button onclick="document.getElementById('info-overlay').style.display='none'"
-    style="position:fixed;top:16px;right:16px;width:34px;height:34px;border-radius:50%;
-           border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);
-           color:#fff;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+  <div style="width:100%;max-width:600px;display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button onclick="document.getElementById('info-overlay').style.display='none'"
+      style="width:34px;height:34px;border-radius:50%;
+             border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);
+             color:#fff;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+  </div>
 
   <!-- Header -->
-  <div style="text-align:center;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);width:100%;max-width:600px;">
+  <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);width:100%;max-width:600px;">
     <h1 style="display:flex;align-items:center;justify-content:center;line-height:1;margin-bottom:6px;">
       <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(16px,4.5vw,24px);color:#f0df70;">LeStar&nbsp;</span>
       <span style="font-family:'Lato',sans-serif;font-style:italic;font-weight:900;font-size:clamp(30px,8vw,46px);color:#f0df70;line-height:1;margin:0 1px 0 2px;">Z</span>
       <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(16px,4.5vw,24px);color:#f0df70;">'s Aimer</span>
     </h1>
-    <p style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.07em;">How to use this tool</p>
+    <p style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.07em;">Reference & Instructions</p>
   </div>
 
-  <div style="width:100%;max-width:600px;color:rgba(255,255,255,0.85);font-size:14px;line-height:1.7;">
+  <div style="width:100%;max-width:600px;color:rgba(255,255,255,0.85);font-size:14px;line-height:1.75;">
+
+    <!-- HOW TO USE — first and prominent -->
+    <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:18px 20px;margin-bottom:20px;border:1px solid rgba(240,223,112,0.25);">
+      <div style="font-size:13px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:#f0df70;margin-bottom:14px;">How to Use</div>
+      <ol style="padding-left:20px;margin:0;">
+        <li style="margin-bottom:10px;">Open <em>LeStar Z's Aimer</em> on your phone.</li>
+        <li style="margin-bottom:10px;">Place the phone on or near the playing surface where you can see it easily.</li>
+        <li style="margin-bottom:10px;">Set up a cue ball and an object ball on the table in a typical shot. Start with an easy one.</li>
+        <li style="margin-bottom:10px;">Note the angle the object ball must travel after contact in order to reach the pocket.</li>
+        <li style="margin-bottom:10px;">With the phone behind the cue ball, move the <strong style="color:#e87030;">Cut Angle</strong> slider until the two balls in the upper graphic approximate that angle.</li>
+        <li style="margin-bottom:10px;">Study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle.</li>
+        <li style="margin-bottom:10px;">Step up to the shot and align the real cue ball and real object ball the same way the lower graphic shows.</li>
+        <li style="margin-bottom:10px;">Shoot that same setup many times until you build a feel for what that alignment looks like on the table and what it produces.</li>
+        <li style="margin-bottom:0;">Only then begin adding the lower sliders — <strong style="color:#70c0f0;">Speed</strong>, <strong style="color:#e870b0;">Spin</strong>, and <strong style="color:#a0d0a0;">Distance</strong> — one at a time, then in combinations. Go slowly. Each one shifts your aim point, and you want to feel what each one does before combining them.</li>
+      </ol>
+    </div>
 
     <!-- The two graphics -->
     <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
@@ -425,22 +461,22 @@ if('serviceWorker' in navigator){
     <!-- Sliders -->
     <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
       <div style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#f0df70;margin-bottom:10px;">The Sliders</div>
-      <p style="margin-bottom:10px;"><strong style="color:#e87030;">Cut Angle</strong> — the direction you want the object ball to travel. Start here. 0° is straight, 90° is a near-miss. The aim point shown is the raw geometry — everything else is a correction on top.</p>
-      <p style="margin-bottom:10px;"><strong style="color:#70c0f0;">Speed</strong> — how hard you hit the shot. Slower shots allow more time for friction to throw the ball off line, so the aim point shifts slightly. Fast shots reduce throw. Use the ON/OFF button to see the difference.</p>
-      <p style="margin-bottom:10px;"><strong style="color:#e870b0;">Spin</strong> — where the tip contacts the cue ball, left (inside) or right (outside). Side english adds its own throw and also causes squirt. Use the ON/OFF button to isolate the effect.</p>
-      <p><strong style="color:#a0d0a0;">Distance</strong> — how far the cue ball must travel to reach the object ball. Squirt from english accumulates over distance, shifting the actual contact point. A half-tip of outside english barely matters at 6 inches but is significant at 6 feet. Toggle OFF to ignore it.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#e87030;">Cut Angle</strong> — the direction you want the object ball to travel. Start here. 0° is straight in, 90° is a near-miss. The aim point shown is pure geometry — everything else adjusts on top of it.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#70c0f0;">Speed</strong> — how hard you hit the shot. Slower shots give friction more time to throw the ball off the geometric line. Fast shots reduce throw. Toggle OFF to see what speed alone is contributing.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#e870b0;">Spin</strong> — where the tip contacts the cue ball: left (inside) or right (outside). Side english adds its own throw and also causes squirt. Toggle OFF to isolate its effect.</p>
+      <p><strong style="color:#a0d0a0;">Distance</strong> — how far the cue ball travels to reach the object ball. Squirt from english accumulates over distance. A half-tip barely matters at 6 inches but is significant at 6 feet. Toggle OFF to ignore it.</p>
     </div>
 
     <!-- Definitions -->
     <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
       <div style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#f0df70;margin-bottom:10px;">Definitions</div>
-      <p style="margin-bottom:10px;"><strong style="color:#fff;">Cut Angle</strong> — the angle between the cue ball's path and the line connecting the two ball centers at contact. 0° is a straight-in shot. 30° sends the object ball roughly 30° off to the side.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Cut Angle</strong> — the angle between the cue ball's path and the line connecting the two ball centers at contact. 0° is straight in. 30° sends the object ball roughly 30° off to the side.</p>
       <p style="margin-bottom:10px;"><strong style="color:#fff;">Throw</strong> — friction between the two balls at contact deflects the object ball slightly away from the pure geometric line. It always occurs on cut shots. Slower speed and outside english increase it.</p>
-      <p style="margin-bottom:10px;"><strong style="color:#fff;">Squirt</strong> — when side english is applied, the cue tip pushes the cue ball slightly sideways off its intended line at the moment of contact. The cue ball then curves back (deflects), but the initial squirt means it arrives at a slightly different contact point than aimed. The effect grows with distance.</p>
-      <p><strong style="color:#fff;">Spin / English</strong> — side rotation applied to the cue ball by striking it left or right of center. Inside english means striking toward the direction of the cut. Outside english means striking away from it.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Squirt</strong> — when side english is applied, the cue tip pushes the cue ball slightly sideways off its intended path at the moment of contact. The effect grows with distance traveled.</p>
+      <p><strong style="color:#fff;">Spin / English</strong> — side rotation applied to the cue ball by striking left or right of center. Inside english means striking toward the direction of the cut. Outside english means striking away from it.</p>
     </div>
 
-    <!-- Note -->
+    <!-- Disclaimer -->
     <p style="font-size:11px;color:rgba(255,255,255,0.75);text-align:center;line-height:1.6;">
       All values are approximations based on standard ball friction coefficients and a mid-weight playing cue.<br>Table conditions, tip hardness, and cue weight will affect results.
     </p>
