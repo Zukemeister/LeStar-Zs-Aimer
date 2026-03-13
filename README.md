@@ -1,0 +1,1 @@
+This is an app that gives a pool player a visual representation of how to aim the cue and the object ball in order for the object ball to go to the desired destination, such as a pocket. The angle calculation can be supplemented by several common factors: distance, speed and spin, each of which influences the aiming process. It is made to be used on a phone.
