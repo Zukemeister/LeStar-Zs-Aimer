@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LeStar Z">
+<meta name="theme-color" content="#1a361a">
+<title>LeStar Z's Aimer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,900&family=Playfair+Display:ital,wght@1,700&display=swap');
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { background:#141414; font-family:'Lato',sans-serif; display:flex; flex-direction:column; align-items:center; padding:12px 8px 32px; min-height:100vh; }
+.card { background:#1a361a; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.7); width:100%; max-width:700px; padding:14px 12px 16px; border:2px solid #2a4e2a; }
+.hdr { text-align:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.07); }
+h1 { display:flex; align-items:center; justify-content:center; line-height:1; margin-bottom:3px; }
+.t-lestar { font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:clamp(16px,4.5vw,24px); color:#f0df70; }
+.t-z { font-family:'Lato',sans-serif; font-style:italic; font-weight:900; font-size:clamp(30px,8vw,46px); color:#f0df70; line-height:1; display:inline-flex; align-items:center; margin:0 1px 0 2px; }
+.t-rest { font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:clamp(16px,4.5vw,24px); color:#f0df70; }
+.sub { font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:0.07em; }
+.diagram-wrap { border:2px solid #000; border-radius:4px; overflow:hidden; margin-bottom:10px; }
+.svg-box { position:relative; width:100%; overflow:hidden; background:rgba(0,0,0,0.22); }
+.svg-box.top-box { padding-bottom:calc(210 / 460 * 100%); }
+.svg-box.bot-box { padding-bottom:calc(338 / 460 * 100%); }
+.svg-box svg { position:absolute; top:0; left:0; width:100%; height:100%; }
+.sep { height:2px; background:#000; }
+.ctrl { margin-top:4px; }
+.sgroup { background:rgba(0,0,0,0.18); border-radius:7px; padding:7px 10px 6px; margin-bottom:6px; border:1px solid rgba(255,255,255,0.07); }
+.sgroup-title { font-size:9px; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:#ddd; margin-bottom:6px; }
+.srow { display:flex; align-items:center; gap:8px; }
+.slbl { font-size:11px; color:#e8e8e8; min-width:62px; font-weight:700; }
+.sval { font-size:12px; font-weight:900; min-width:76px; text-align:right; white-space:nowrap; }
+.orange{color:#e87030;} .blue{color:#70c0f0;} .pink{color:#e870b0;} .yellow{color:#f0df70;} .green{color:#88ee88;}
+input[type=range] { flex:1; -webkit-appearance:none; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; outline:none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid #1a361a; box-shadow:0 1px 5px rgba(0,0,0,0.5); }
+#sl-cut::-webkit-slider-thumb   { background:#e87030; }
+#sl-speed::-webkit-slider-thumb { background:#70c0f0; }
+#sl-spin::-webkit-slider-thumb  { background:#e870b0; }
+#sl-dist::-webkit-slider-thumb  { background:#a0d0a0; }
+.readout { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; }
+.ri { background:rgba(0,0,0,0.3); border-radius:6px; padding:8px 6px; text-align:center; border:1px solid rgba(255,255,255,0.08); height:64px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+.ri-lbl { font-size:9px; color:#ccc; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:2px; flex-shrink:0; }
+.ri-val { font-size:clamp(18px,5vw,26px); font-weight:900; line-height:1; white-space:nowrap; }
+#r-frc { font-size:clamp(14px,4vw,22px); }
+.comp-row { display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px; font-size:11px; color:rgba(255,255,255,0.45); }
+.comp-val { font-weight:900; font-size:13px; }
+</style>
+</head>
+<body>
+
+<!-- Persistent gradient defs — lives in the DOM permanently, never replaced.
+     All SVG fill="url(#...)" references point here. Mobile safe. -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="CGT" cx="36%" cy="28%">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="48%"  stop-color="#d8d2c4"/>
+      <stop offset="100%" stop-color="#908070"/>
+    </radialGradient>
+    <radialGradient id="OGT" cx="34%" cy="26%">
+      <stop offset="0%"   stop-color="#ff8a8a"/>
+      <stop offset="35%"  stop-color="#d01818"/>
+      <stop offset="75%"  stop-color="#7a0a0a"/>
+      <stop offset="100%" stop-color="#3c0404"/>
+    </radialGradient>
+    <radialGradient id="CGB" cx="36%" cy="28%">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="48%"  stop-color="#d8d2c4"/>
+      <stop offset="100%" stop-color="#908070"/>
+    </radialGradient>
+    <radialGradient id="OGB" cx="34%" cy="26%">
+      <stop offset="0%"   stop-color="#ff8a8a"/>
+      <stop offset="35%"  stop-color="#d01818"/>
+      <stop offset="75%"  stop-color="#7a0a0a"/>
+      <stop offset="100%" stop-color="#3c0404"/>
+    </radialGradient>
+    <radialGradient id="OGdB" cx="34%" cy="26%">
+      <stop offset="0%"   stop-color="#4a1a1a"/>
+      <stop offset="55%"  stop-color="#2c0808"/>
+      <stop offset="100%" stop-color="#140202"/>
+    </radialGradient>
+    <marker id="Tarr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0,0 9,3.5 0,7" fill="rgba(255,255,255,0.92)"/>
+    </marker>
+  </defs>
+</svg>
+
+<div class="card">
+  <div class="hdr" style="position:relative;">
+    <button onclick="document.getElementById('info-overlay').style.display='flex'"
+      style="position:absolute;left:0;top:50%;transform:translateY(-50%);
+             width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);
+             background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);
+             font-family:'Lato',sans-serif;font-size:14px;font-weight:900;
+             cursor:pointer;line-height:1;">?</button>
+    <h1><span class="t-lestar">LeStar&nbsp;</span><span class="t-z">Z</span><span class="t-rest">'s Aimer</span></h1>
+    <p class="sub">Set the angle you want · adjust for speed & spin · one aim point</p>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="svg-box top-box">
+      <svg id="topsvg" viewBox="0 0 460 210" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="sep"></div>
+    <div class="svg-box bot-box">
+      <!-- viewBox height increased to 338 to give badge room below fraction labels -->
+      <svg id="botsvg" viewBox="0 0 460 338" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="sgroup">
+      <div class="srow">
+        <span class="slbl">Cut angle</span>
+        <input type="range" id="sl-cut" min="0" max="100" value="0" step="1">
+        <span class="sval orange" id="v-cut">0°</span>
+      </div>
+    </div>
+    <div class="sgroup">
+      <div class="sgroup-title">Speed — affects how much throw occurs
+        <button id="speed-toggle" onclick="toggleSpeed()" style="float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:#3a7a3a;color:#fff;">ON</button>
+      </div>
+      <div class="srow" id="speed-row">
+        <span class="slbl">Speed</span>
+        <span style="font-size:10px;color:#70c0f0;font-weight:700;min-width:28px;text-align:right">slow</span>
+        <input type="range" id="sl-speed" min="0" max="100" value="50" step="1">
+        <span style="font-size:10px;color:#70c0f0;font-weight:700;min-width:28px;text-align:left">fast</span>
+      </div>
+    </div>
+    <div class="sgroup">
+      <div class="sgroup-title">Spin — where the tip hits the cue ball &nbsp;·&nbsp; ← inside &nbsp;|&nbsp; outside →
+        <button id="spin-toggle" onclick="toggleSpin()" style="float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:#3a7a3a;color:#fff;">ON</button>
+      </div>
+      <div class="srow" id="spin-row">
+        <span class="slbl">Spin</span>
+        <input type="range" id="sl-spin" min="0" max="100" value="50" step="1">
+        <span class="sval pink" id="v-spin">center</span>
+      </div>
+    </div>
+    <div class="sgroup">
+      <div class="sgroup-title">Distance — squirt from spin grows with distance to object ball
+        <button id="dist-toggle" onclick="toggleDist()" style="float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:#3a7a3a;color:#fff;">ON</button>
+      </div>
+      <div class="srow" id="dist-row">
+        <span class="slbl">Distance</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:right">near</span>
+        <input type="range" id="sl-dist" min="0" max="100" value="25" step="1">
+        <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:left">far</span>
+        <span class="sval" id="v-dist" style="color:rgba(255,255,255,0.7)">2 ft</span>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="ri"><div class="ri-lbl">Aim point</div><div class="ri-val orange" id="r-aim">0%</div></div>
+      <div class="ri"><div class="ri-lbl">Ball fraction</div><div class="ri-val green" id="r-frc">full ball</div></div>
+      <div class="ri"><div class="ri-lbl">Cut angle</div><div class="ri-val yellow" id="r-ang">0°</div></div>
+    </div>
+    <div class="comp-row">
+      Speed & spin adjustment: <span class="comp-val" id="r-throw" style="color:#fff">none</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEG=180/Math.PI, RAD=Math.PI/180;
+const Rt=42, Rb=82;
+const TOP_OCX=210, BOT_OCX=148;
+
+const speedFactor=[0,0.95,0.72,0.45,0.22,0.08];
+const speedLabels=['','slow','med-slow','medium','med-fast','fast'];
+const spinLabels={
+  '-4':'2 tips inside','-3':'1½ tips inside','-2':'1 tip inside','-1':'½ tip inside',
+  '0':'center','1':'½ tip outside','2':'1 tip outside','3':'1½ tips outside','4':'2 tips outside'
+};
+
+function fracStr(hf){
+  if(hf<0.005)   return 'full ball';
+  if(hf<0.125)   return '⅛ ball';
+  if(hf<0.250)   return '¼ ball';
+  if(hf<0.375)   return '⅜ ball';
+  if(hf<0.500)   return '½ ball';
+  if(hf<0.625)   return '⅝ ball';
+  if(hf<0.750)   return '¾ ball';
+  if(hf<0.875)   return '⅞ ball';
+  if(hf<0.9375)  return '15/16 ball';
+  if(hf<0.9999)  return 'thin cut';
+  return 'miss';
+}
+
+function compute(){
+  var cutRaw=parseInt(document.getElementById('sl-cut').value)/100;
+  // Map 0-100 → speed level 1-5
+  var speedRaw=parseInt(document.getElementById('sl-speed').value);
+  var speed = (window.speedEnabled!==false) ? Math.min(5,Math.floor(speedRaw/100*5)+1) : 3; // 3=medium when off
+  var spinRaw=parseInt(document.getElementById('sl-spin').value);
+  var spin = (window.spinEnabled!==false) ? Math.round((spinRaw/100)*8)-4 : 0;
+  // Map 0-100 → 0.5 to 9 feet
+  var distRaw=parseInt(document.getElementById('sl-dist').value);
+  var distFt=0.5+(distRaw/100)*8.5;
+  var distIn=distFt*12;
+  var distEnabled=window.distEnabled!==false;
+
+  var Z_des = cutRaw >= 1.0 ? Math.PI/2 : Math.asin(cutRaw);
+  var cutThrow=Math.atan(0.015*Math.cos(Z_des));
+  var spinThrow=spin*1.2*RAD;
+  var sf=speedFactor[speed];
+  var Z_aim = cutRaw < 0.005 ? 0 : cutRaw >= 1.0 ? Math.PI/2 : Math.max(0,Math.min(Z_des+(cutThrow+spinThrow)*sf, Math.PI/2));
+
+  // Squirt: realistic 0.5° per tip, capped at 5ft effective distance (beyond that
+  // you're compensating by feel anyway), and capped at ±25% of a ball width.
+  var squirtAngle = spin * 0.5 * RAD;
+  var effectiveDist = distEnabled ? Math.min(distIn, 60) : 0;
+  var squirtDrift = effectiveDist * Math.tan(squirtAngle);
+  var squirtFraction = Math.max(-0.25, Math.min(0.25, squirtDrift / 2.25));
+
+  // At near-90° the shot is a miss regardless — suppress compensation math
+  var atExtreme = cutRaw > 0.97;
+  var geoFrac = Math.sin(Z_des);
+  var aimFraction = atExtreme ? geoFrac : Math.max(0, Math.min(1, Math.sin(Z_aim) - squirtFraction));
+
+  return { Z_des, Z_aim,
+    geoFrac,
+    aimFraction,
+    spin, speed, distFt,
+    squirtFraction: atExtreme ? 0 : squirtFraction,
+    throwDiff: atExtreme ? 0 : Math.round(Math.sin(Z_aim)*100) - Math.round(geoFrac*100)
+  };
+}
+
+function clipToBox(ox,oy,tx,ty,W,H,m){
+  var dx=tx-ox, dy=ty-oy;
+  if(!dx&&!dy) return [tx,ty];
+  var t=1;
+  if(dx<0) t=Math.min(t,(m-ox)/dx);
+  else if(dx>0) t=Math.min(t,(W-m-ox)/dx);
+  if(dy<0) t=Math.min(t,(m-oy)/dy);
+  else if(dy>0) t=Math.min(t,(H-m-oy)/dy);
+  t=Math.max(0,Math.min(1,t));
+  return [ox+t*dx, oy+t*dy];
+}
+
+// ── TOP VIEW ─────────────────────────────────────────────────
+function drawTop(d){
+  var W=460, H=210, r=Rt;
+  var sinA=Math.sin(d.Z_des), cosA=Math.cos(d.Z_des);
+  var ocx=TOP_OCX, ocy=72+sinA*22;
+  var ccx=ocx+sinA*2*r, ccy=ocy+cosA*2*r;
+  var ux=-sinA, uy=-cosA;
+  var tail=[ccx-ux*50, ccy-uy*50];
+  var head=clipToBox(ocx,ocy, ocx+ux*130, ocy+uy*130, W,H,6);
+  var arcR=34, Zdeg=Math.round(d.Z_des*DEG);
+
+  var out='';
+  // Faint vertical reference
+  out+='<line x1="'+ocx+'" y1="6" x2="'+ocx+'" y2="'+(H-6)+'" stroke="rgba(255,255,255,0.07)" stroke-width="1.2" stroke-dasharray="3,5"/>';
+  // Arrow
+  out+='<line x1="'+tail[0]+'" y1="'+tail[1]+'" x2="'+head[0]+'" y2="'+head[1]+'" stroke="rgba(255,255,255,0.92)" stroke-width="2.6" marker-end="url(#Tarr)"/>';
+  // Arc + angle label
+  if(sinA>0.025){
+    var arcEndX=ocx+ux*arcR, arcEndY=ocy+uy*arcR;
+    out+='<path d="M'+ocx+','+(ocy-arcR)+' A'+arcR+','+arcR+' 0 0,0 '+arcEndX+','+arcEndY+'" fill="none" stroke="#e87030" stroke-width="2"/>';
+    out+='<text x="'+(ocx+ux*arcR*0.52-18)+'" y="'+(ocy+uy*arcR*0.52-4)+'" font-family="Lato,sans-serif" font-size="13" font-weight="900" fill="#e87030">'+Zdeg+'°</text>';
+  }
+  // Cue ball first (underneath), then red ball on top
+  out+='<circle cx="'+ccx+'" cy="'+ccy+'" r="'+r+'" fill="url(#CGT)" stroke="#aaa" stroke-width="1.2"/>';
+  out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGT)" stroke="#7a1010" stroke-width="1.2"/>';
+  out+='<text x="'+(W-8)+'" y="'+(H-8)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">BIRD\'S EYE</text>';
+
+  document.getElementById('topsvg').innerHTML=out;
+}
+
+// ── BOTTOM VIEW ───────────────────────────────────────────────
+// viewBox height = 338. ocy=155. Ball bottom = 237.
+// Fraction labels at ocy+r+22 = 259.
+// Badge at ocy+r+38 = 275 to 275+34 = 309. Comfortably below labels.
+// EYE LEVEL at 330. All fits inside 338.
+function drawBot(d){
+  var W=460, H=338, r=Rb;
+  var ocx=BOT_OCX, ocy=155;
+  var aimF=d.aimFraction;
+  var ccx=ocx+aimF*2*r;
+  var edgeX=ccx-r;
+  var revealW=Math.max(0,edgeX-(ocx-r));
+  var laX1=ocx-r-22, laX2=ocx+r+22;
+  var aimP=Math.round(aimF*100);
+
+  // Sixteenth ticks
+  var ticks='';
+  for(var i=0;i<=16;i++){
+    var tx=(ocx-r)+(i/16)*(2*r);
+    var big=(i===0||i===8||i===16), med=(i===4||i===12);
+    var th=big?17:med?12:5, sw=big?2.2:med?1.5:0.8, op=big?1.0:med?0.65:0.32;
+    ticks+='<line x1="'+tx+'" y1="'+(ocy-th)+'" x2="'+tx+'" y2="'+(ocy+th)+'" stroke="#7fd0f0" stroke-width="'+sw+'" opacity="'+op+'"/>';
+    if(i===0)  ticks+='<text x="'+tx+'" y="'+(ocy-r-22)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="11" font-weight="700" fill="#b0e8ff">0%</text>';
+    if(i===8)  ticks+='<text x="'+tx+'" y="'+(ocy-r-22)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="11" font-weight="700" fill="#b0e8ff">50%</text>';
+    if(i===16) ticks+='<text x="'+tx+'" y="'+(ocy-r-22)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="11" font-weight="700" fill="#b0e8ff">100%</text>';
+    var fr=['','','⅛','','¼','','⅜','','','','⅝','','¾','','⅞','',''][i];
+    if(fr) ticks+='<text x="'+tx+'" y="'+(ocy+r+22)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="10" fill="rgba(255,255,255,0.55)">'+fr+'</text>';
+  }
+
+  var out='';
+  // clipPath must stay in local defs since it uses a dynamic rect
+  out+='<defs><clipPath id="revClip"><rect x="'+(ocx-r)+'" y="'+(ocy-r)+'" width="'+revealW+'" height="'+(2*r)+'"/></clipPath></defs>';
+
+  // Object ball
+  out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGdB)" stroke="#2a0606" stroke-width="1.5"/>';
+  out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGB)" stroke="none" clip-path="url(#revClip)"/>';
+  out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="none" stroke="#8a1818" stroke-width="1.5" clip-path="url(#revClip)"/>';
+
+  // Line A + ticks
+  out+='<line x1="'+laX1+'" y1="'+ocy+'" x2="'+laX2+'" y2="'+ocy+'" stroke="#7fd0f0" stroke-width="3" stroke-linecap="round"/>';
+  out+='<text x="'+(laX1-8)+'" y="'+(ocy+5)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="15" font-weight="900" fill="#b0e8ff">A</text>';
+  out+=ticks;
+
+  // Cue ball + tip
+  out+='<circle cx="'+ccx+'" cy="'+ocy+'" r="'+r+'" fill="url(#CGB)" stroke="#aaa" stroke-width="1.5"/>';
+  out+='<line x1="'+(ccx-r*0.74)+'" y1="'+ocy+'" x2="'+(ccx+r*0.74)+'" y2="'+ocy+'" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>';
+  out+='<line x1="'+ccx+'" y1="'+(ocy-r*0.74)+'" x2="'+ccx+'" y2="'+(ocy+r*0.74)+'" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>';
+  var tipX=ccx+(d.spin/4)*0.62*r;
+  out+='<circle cx="'+tipX+'" cy="'+ocy+'" r="'+(r*0.10)+'" fill="#000" opacity="0.85"/>';
+
+  if(edgeX>ocx-r+3){
+    // Aim marker
+    out+='<line x1="'+edgeX+'" y1="'+(ocy-r+6)+'" x2="'+edgeX+'" y2="'+(ocy+r-6)+'" stroke="#e87030" stroke-width="4" stroke-linecap="round" stroke-dasharray="6,4"/>';
+    // "inside edge" label above ball
+    var lblX=Math.max(72, Math.min(edgeX, W-76));
+    out+='<text x="'+lblX+'" y="'+(ocy-r-8)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="11" font-weight="700" fill="#ffb080">inside edge</text>';
+    // Badge: below fraction labels (ocy+r+22), so start at ocy+r+38
+    var bx=Math.max(44, Math.min(edgeX, W-44));
+    out+='<rect x="'+(bx-40)+'" y="'+(ocy+r+38)+'" width="80" height="34" rx="7" fill="#e87030"/>';
+    out+='<text x="'+bx+'" y="'+(ocy+r+60)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="white">'+aimP+'%</text>';
+  } else {
+    out+='<text x="'+(ocx+r+80)+'" y="'+(ocy+5)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">drag cut angle → to begin</text>';
+  }
+
+  out+='<text x="'+(W-8)+'" y="'+(H-8)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">EYE LEVEL</text>';
+  document.getElementById('botsvg').innerHTML=out;
+}
+
+function update(){
+  var d=compute();
+  drawTop(d); drawBot(d);
+  var Zdeg=Math.round(d.Z_des*DEG);
+  var aimP=Math.round(d.aimFraction*100);
+  var diff=aimP-Math.round(d.geoFrac*100);
+  document.getElementById('v-cut').textContent    = Zdeg+'°';
+  document.getElementById('v-spin').textContent   = spinLabels[String(d.spin)];
+  document.getElementById('r-aim').textContent    = aimP+'%';
+  document.getElementById('r-frc').textContent    = fracStr(d.aimFraction);
+  document.getElementById('r-ang').textContent    = Zdeg+'°';
+  // Distance display
+  var ft=d.distFt, ftStr=ft<1?(Math.round(ft*12)+'"'):(Math.round(ft*10)/10)+' ft';
+  document.getElementById('v-dist').textContent = ftStr;
+  // Combined adjustment: throw + squirt
+  var throwEl=document.getElementById('r-throw');
+  var td=d.throwDiff, sq=Math.round(d.squirtFraction*100);
+  if(Math.abs(td)<1 && Math.abs(sq)<1){
+    throwEl.textContent='none'; throwEl.style.color='#fff';
+  } else {
+    var parts=[];
+    if(Math.abs(td)>=1) parts.push('throw '+(td>0?'+':'')+td+'%');
+    if(Math.abs(sq)>=1) parts.push('squirt '+(sq>0?'−':'+')+Math.abs(sq)+'%');
+    throwEl.textContent=parts.join('  ·  ');
+    throwEl.style.color='#e8a050';
+  }
+}
+
+document.getElementById('sl-cut').addEventListener('input',update);
+document.getElementById('sl-speed').addEventListener('input',update);
+document.getElementById('sl-spin').addEventListener('input',update);
+document.getElementById('sl-dist').addEventListener('input',update);
+
+window.distEnabled  = true;
+window.speedEnabled = true;
+window.spinEnabled  = true;
+
+function setToggle(id, rowId, enabled){
+  var btn=document.getElementById(id);
+  var row=document.getElementById(rowId);
+  if(enabled){ btn.textContent='ON'; btn.style.background='#3a7a3a'; row.style.opacity='1'; row.style.pointerEvents='auto'; }
+  else        { btn.textContent='OFF'; btn.style.background='#555';  row.style.opacity='0.35'; row.style.pointerEvents='none'; }
+}
+function toggleSpeed(){ window.speedEnabled=!window.speedEnabled; setToggle('speed-toggle','speed-row',window.speedEnabled); update(); }
+function toggleSpin(){  window.spinEnabled =!window.spinEnabled;  setToggle('spin-toggle', 'spin-row', window.spinEnabled);  update(); }
+function toggleDist(){  window.distEnabled =!window.distEnabled;  setToggle('dist-toggle', 'dist-row', window.distEnabled);  update(); }
+window.addEventListener('load',update);
+
+if('serviceWorker' in navigator){
+  var swBlob=new Blob([
+    'self.addEventListener("install",function(e){self.skipWaiting();});'+
+    'self.addEventListener("fetch",function(e){e.respondWith(fetch(e.request).catch(function(){return caches.match(e.request);}));});'
+  ],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(){});
+}
+</script>
+<!-- ── Info overlay ─────────────────────────────────────────── -->
+<div id="info-overlay" style="display:none;position:fixed;inset:0;z-index:999;
+     background:#0e260e;overflow-y:auto;flex-direction:column;align-items:center;padding:24px 20px 48px;">
+
+  <!-- Close button -->
+  <button onclick="document.getElementById('info-overlay').style.display='none'"
+    style="position:fixed;top:16px;right:16px;width:34px;height:34px;border-radius:50%;
+           border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);
+           color:#fff;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+
+  <!-- Header -->
+  <div style="text-align:center;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);width:100%;max-width:600px;">
+    <h1 style="display:flex;align-items:center;justify-content:center;line-height:1;margin-bottom:6px;">
+      <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(16px,4.5vw,24px);color:#f0df70;">LeStar&nbsp;</span>
+      <span style="font-family:'Lato',sans-serif;font-style:italic;font-weight:900;font-size:clamp(30px,8vw,46px);color:#f0df70;line-height:1;margin:0 1px 0 2px;">Z</span>
+      <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(16px,4.5vw,24px);color:#f0df70;">'s Aimer</span>
+    </h1>
+    <p style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.07em;">How to use this tool</p>
+  </div>
+
+  <div style="width:100%;max-width:600px;color:rgba(255,255,255,0.85);font-size:14px;line-height:1.7;">
+
+    <!-- The two graphics -->
+    <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
+      <div style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#f0df70;margin-bottom:10px;">The Two Graphics</div>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Bird's Eye (top)</strong> — looking straight down at the table. The red object ball sits fixed on the left; the white cue ball moves to show your contact point as you adjust the cut angle. The arrow shows where the object ball will travel after contact.</p>
+      <p><strong style="color:#fff;">Eye Level (bottom)</strong> — your view from behind the cue ball, chin near the felt. Line <strong style="color:#7fd0f0;">A</strong> runs across the face of the object ball. The tick marks divide it into sixteenths. The orange dashed line marks exactly where the inside edge of the cue ball must be aimed. The percentage badge shows that position as a fraction of the ball's width.</p>
+    </div>
+
+    <!-- Sliders -->
+    <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
+      <div style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#f0df70;margin-bottom:10px;">The Sliders</div>
+      <p style="margin-bottom:10px;"><strong style="color:#e87030;">Cut Angle</strong> — the direction you want the object ball to travel. Start here. 0° is straight, 90° is a near-miss. The aim point shown is the raw geometry — everything else is a correction on top.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#70c0f0;">Speed</strong> — how hard you hit the shot. Slower shots allow more time for friction to throw the ball off line, so the aim point shifts slightly. Fast shots reduce throw. Use the ON/OFF button to see the difference.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#e870b0;">Spin</strong> — where the tip contacts the cue ball, left (inside) or right (outside). Side english adds its own throw and also causes squirt. Use the ON/OFF button to isolate the effect.</p>
+      <p><strong style="color:#a0d0a0;">Distance</strong> — how far the cue ball must travel to reach the object ball. Squirt from english accumulates over distance, shifting the actual contact point. A half-tip of outside english barely matters at 6 inches but is significant at 6 feet. Toggle OFF to ignore it.</p>
+    </div>
+
+    <!-- Definitions -->
+    <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,0.08);">
+      <div style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#f0df70;margin-bottom:10px;">Definitions</div>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Cut Angle</strong> — the angle between the cue ball's path and the line connecting the two ball centers at contact. 0° is a straight-in shot. 30° sends the object ball roughly 30° off to the side.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Throw</strong> — friction between the two balls at contact deflects the object ball slightly away from the pure geometric line. It always occurs on cut shots. Slower speed and outside english increase it.</p>
+      <p style="margin-bottom:10px;"><strong style="color:#fff;">Squirt</strong> — when side english is applied, the cue tip pushes the cue ball slightly sideways off its intended line at the moment of contact. The cue ball then curves back (deflects), but the initial squirt means it arrives at a slightly different contact point than aimed. The effect grows with distance.</p>
+      <p><strong style="color:#fff;">Spin / English</strong> — side rotation applied to the cue ball by striking it left or right of center. Inside english means striking toward the direction of the cut. Outside english means striking away from it.</p>
+    </div>
+
+    <!-- Note -->
+    <p style="font-size:11px;color:rgba(255,255,255,0.75);text-align:center;line-height:1.6;">
+      All values are approximations based on standard ball friction coefficients and a mid-weight playing cue.<br>Table conditions, tip hardness, and cue weight will affect results.
+    </p>
+
+  </div>
+</div>
+
+</body>
+</html>
