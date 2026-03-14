@@ -488,11 +488,14 @@ window.addEventListener('load',update);
   }
 
   function xToSlider(x){
+    // Map x linearly to angle over extended range (224 SVG units = 0-90°)
+    // This spreads the 80-90° range out so it's controllable
+    var DRAG_RANGE = 224;
     var rh = window.rightHand === true;
     var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
-    var aimF = rh ? (ocx - x) / (2*Rb) : (x - ocx) / (2*Rb);
-    aimF = Math.max(0, Math.min(1.0, aimF));
-    var slVal = aimF >= 1.0 ? 100 : Math.round(Math.asin(aimF) / (Math.PI/2) * 100);
+    var dx = rh ? (ocx - x) : (x - ocx);
+    dx = Math.max(0, Math.min(DRAG_RANGE, dx));
+    var slVal = Math.round(dx / DRAG_RANGE * 100);
     return Math.max(0, Math.min(100, slVal));
   }
 
@@ -501,7 +504,7 @@ window.addEventListener('load',update);
     var rh = window.rightHand === true;
     var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
     var ccx = rh ? ocx - d.aimFraction*2*Rb : ocx + d.aimFraction*2*Rb;
-    return Math.abs(x - ccx) < Rb * 0.7;
+    return Math.abs(x - ccx) < Rb * 0.85;
   }
 
   overlay.addEventListener('touchstart', function(e){
