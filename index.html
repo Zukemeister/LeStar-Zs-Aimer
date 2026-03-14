@@ -30,21 +30,23 @@ h1 { display:flex; align-items:center; justify-content:center; line-height:1; ma
 .sgroup-title { font-size:9px; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:#ddd; margin-bottom:6px; }
 .srow { display:flex; align-items:center; gap:8px; }
 .slbl { font-size:11px; color:#e8e8e8; min-width:62px; font-weight:700; }
-.sval { font-size:12px; font-weight:900; min-width:76px; text-align:right; white-space:nowrap; }
+.sval { font-size:15px; font-weight:900; min-width:76px; text-align:right; white-space:nowrap; }
 .orange{color:#e87030;} .blue{color:#70c0f0;} .pink{color:#e870b0;} .yellow{color:#f0df70;} .green{color:#88ee88;}
-input[type=range] { flex:1; -webkit-appearance:none; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; outline:none; }
+input[type=range] { flex:1; -webkit-appearance:none; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; outline:none; touch-action:pan-x; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid #1a361a; box-shadow:0 1px 5px rgba(0,0,0,0.5); }
-#sl-cut::-webkit-slider-thumb   { background:#e87030; }
+#sl-cut::-webkit-slider-thumb   { background:#e87030; width:30px; height:30px; }
+#sl-cut { height:8px; }
 #sl-speed::-webkit-slider-thumb { background:#70c0f0; }
 #sl-spin::-webkit-slider-thumb  { background:#e870b0; }
 #sl-dist::-webkit-slider-thumb  { background:#a0d0a0; }
+#sl-bias::-webkit-slider-thumb  { background:#c890f0; }
 .readout { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; }
-.ri { background:rgba(0,0,0,0.3); border-radius:6px; padding:8px 6px; text-align:center; border:1px solid rgba(255,255,255,0.08); height:64px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
-.ri-lbl { font-size:9px; color:#ccc; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:2px; flex-shrink:0; }
-.ri-val { font-size:clamp(18px,5vw,26px); font-weight:900; line-height:1; white-space:nowrap; }
-#r-frc { font-size:clamp(14px,4vw,22px); }
-.comp-row { display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px; font-size:11px; color:rgba(255,255,255,0.45); }
-.comp-val { font-weight:900; font-size:13px; }
+.ri { background:rgba(0,0,0,0.3); border-radius:6px; padding:10px 6px; text-align:center; border:1px solid rgba(255,255,255,0.08); min-height:82px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+.ri-lbl { font-size:11px; color:#ccc; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; flex-shrink:0; }
+.ri-val { font-size:clamp(26px,7vw,38px); font-weight:900; line-height:1; white-space:nowrap; }
+#r-frc { font-size:clamp(20px,5.5vw,30px); }
+.comp-row { display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px; font-size:13px; color:rgba(255,255,255,0.55); }
+.comp-val { font-weight:900; font-size:15px; }
 </style>
 </head>
 <body>
@@ -94,6 +96,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
              background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);
              font-family:'Lato',sans-serif;font-size:14px;font-weight:900;
              cursor:pointer;line-height:1;">?</button>
+    <button id="hand-btn" onclick="toggleHand()"
+      style="position:absolute;right:0;top:50%;transform:translateY(-50%);
+             padding:4px 10px;border-radius:14px;
+             border:2px solid rgba(240,223,112,0.5);
+             background:rgba(240,223,112,0.1);color:#f0df70;
+             font-family:'Lato',sans-serif;font-size:11px;font-weight:900;
+             letter-spacing:0.06em;cursor:pointer;line-height:1.2;">
+      ◀ LEFT
+    </button>
     <h1><span class="t-lestar">LeStar&nbsp;</span><span class="t-z">Z</span><span class="t-rest">'s Aimer</span></h1>
     <p class="sub">Set the angle you want · adjust for speed & spin · one aim point</p>
   </div>
@@ -159,6 +170,19 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       </div>
     </div>
   </div>
+    <div class="sgroup">
+      <div class="sgroup-title">Personal Bias — compensate for your tendency to undercut or overcut
+        <button id="bias-toggle" onclick="toggleBias()" style="float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:#3a7a3a;color:#fff;">ON</button>
+      </div>
+      <div class="srow" id="bias-row">
+        <span class="slbl">Bias</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:right">fuller</span>
+        <input type="range" id="sl-bias" min="-12" max="12" value="0" step="1">
+        <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:left">thinner</span>
+        <span class="sval" id="v-bias" style="color:#fff;">none</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -199,12 +223,15 @@ function compute(){
   var distFt=0.5+(distRaw/100)*8.5;
   var distIn=distFt*12;
   var distEnabled=window.distEnabled!==false;
+  var biasRaw=parseInt(document.getElementById('sl-bias').value);
+  var biasDeg=(window.biasEnabled!==false) ? biasRaw : 0;
+  var biasRad=biasDeg*RAD;
 
   var Z_des = cutRaw >= 1.0 ? Math.PI/2 : Math.asin(cutRaw);
   var cutThrow=Math.atan(0.015*Math.cos(Z_des));
   var spinThrow=spin*1.2*RAD;
   var sf=speedFactor[speed];
-  var Z_aim = cutRaw < 0.005 ? 0 : cutRaw >= 1.0 ? Math.PI/2 : Math.max(0,Math.min(Z_des+(cutThrow+spinThrow)*sf, Math.PI/2));
+  var Z_aim = cutRaw < 0.005 ? 0 : cutRaw >= 1.0 ? Math.PI/2 : Math.max(0,Math.min(Z_des+(cutThrow+spinThrow)*sf+biasRad, Math.PI/2));
 
   // Squirt: realistic 0.5° per tip, capped at 5ft effective distance (beyond that
   // you're compensating by feel anyway), and capped at ±25% of a ball width.
@@ -287,11 +314,14 @@ function drawTop(d){
 // EYE LEVEL at 330. All fits inside 338.
 function drawBot(d){
   var W=460, H=338, r=Rb;
-  var ocx=BOT_OCX, ocy=155;
+  var rh=window.rightHand===true;
+  // For right-hand: cue ball is to the LEFT of object ball
+  // Mirror object ball to right side of viewBox
+  var ocx=rh?(W-BOT_OCX):BOT_OCX, ocy=155;
   var aimF=d.aimFraction;
-  var ccx=ocx+aimF*2*r;
-  var edgeX=ccx-r;
-  var revealW=Math.max(0,edgeX-(ocx-r));
+  var ccx=rh ? ocx-aimF*2*r : ocx+aimF*2*r;
+  var edgeX=rh ? ccx+r : ccx-r;
+  var revealW=rh ? Math.max(0,(ocx+r)-edgeX) : Math.max(0,edgeX-(ocx-r));
   var laX1=ocx-r-22, laX2=ocx+r+22;
   var aimP=Math.round(aimF*100);
 
@@ -311,7 +341,8 @@ function drawBot(d){
 
   var out='';
   // clipPath must stay in local defs since it uses a dynamic rect
-  out+='<defs><clipPath id="revClip"><rect x="'+(ocx-r)+'" y="'+(ocy-r)+'" width="'+revealW+'" height="'+(2*r)+'"/></clipPath></defs>';
+  var clipX=rh?edgeX:(ocx-r);
+  out+='<defs><clipPath id="revClip"><rect x="'+clipX+'" y="'+(ocy-r)+'" width="'+revealW+'" height="'+(2*r)+'"/></clipPath></defs>';
 
   // Object ball
   out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGdB)" stroke="#2a0606" stroke-width="1.5"/>';
@@ -330,18 +361,17 @@ function drawBot(d){
   var tipX=ccx+(d.spin/4)*0.62*r;
   out+='<circle cx="'+tipX+'" cy="'+ocy+'" r="'+(r*0.10)+'" fill="#000" opacity="0.85"/>';
 
-  if(edgeX>ocx-r+3){
-    // Aim marker
+  var showMarker=rh ? edgeX<ocx+r-3 : edgeX>ocx-r+3;
+  if(showMarker){
     out+='<line x1="'+edgeX+'" y1="'+(ocy-r+6)+'" x2="'+edgeX+'" y2="'+(ocy+r-6)+'" stroke="#e87030" stroke-width="4" stroke-linecap="round" stroke-dasharray="6,4"/>';
-    // "inside edge" label above ball
     var lblX=Math.max(72, Math.min(edgeX, W-76));
     out+='<text x="'+lblX+'" y="'+(ocy-r-8)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="11" font-weight="700" fill="#ffb080">inside edge</text>';
-    // Badge: below fraction labels (ocy+r+22), so start at ocy+r+38
     var bx=Math.max(44, Math.min(edgeX, W-44));
     out+='<rect x="'+(bx-40)+'" y="'+(ocy+r+38)+'" width="80" height="34" rx="7" fill="#e87030"/>';
     out+='<text x="'+bx+'" y="'+(ocy+r+60)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="white">'+aimP+'%</text>';
   } else {
-    out+='<text x="'+(ocx+r+80)+'" y="'+(ocy+5)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">drag cut angle → to begin</text>';
+    var hintX=rh?(ocx-r-80):(ocx+r+80);
+    out+='<text x="'+hintX+'" y="'+(ocy+5)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">drag cut angle → to begin</text>';
   }
 
   out+='<text x="'+(W-8)+'" y="'+(H-8)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">EYE LEVEL</text>';
@@ -362,6 +392,8 @@ function update(){
   // Distance display
   var ft=d.distFt, ftStr=ft<1?(Math.round(ft*12)+'"'):(Math.round(ft*10)/10)+' ft';
   document.getElementById('v-dist').textContent = ftStr;
+  var biasVal=parseInt(document.getElementById('sl-bias').value);
+  document.getElementById('v-bias').textContent = biasVal===0?'none':(biasVal>0?'+':'')+biasVal+'°';
   // Combined adjustment: throw + squirt
   var throwEl=document.getElementById('r-throw');
   var td=d.throwDiff, sq=Math.round(d.squirtFraction*100);
@@ -391,6 +423,7 @@ document.getElementById('sl-dist').addEventListener('input',update);
 window.distEnabled  = true;
 window.speedEnabled = true;
 window.spinEnabled  = true;
+window.biasEnabled  = true;
 
 function setToggle(id, rowId, enabled){
   var btn=document.getElementById(id);
@@ -401,7 +434,32 @@ function setToggle(id, rowId, enabled){
 function toggleSpeed(){ window.speedEnabled=!window.speedEnabled; setToggle('speed-toggle','speed-row',window.speedEnabled); update(); }
 function toggleSpin(){  window.spinEnabled =!window.spinEnabled;  setToggle('spin-toggle', 'spin-row', window.spinEnabled);  update(); }
 function toggleDist(){  window.distEnabled =!window.distEnabled;  setToggle('dist-toggle', 'dist-row', window.distEnabled);  update(); }
+function toggleBias(){  window.biasEnabled =!window.biasEnabled;  setToggle('bias-toggle','bias-row',window.biasEnabled);  update(); }
+function toggleHand(){
+  window.rightHand = !window.rightHand;
+  var btn=document.getElementById('hand-btn');
+  btn.textContent = window.rightHand ? 'RIGHT ▶' : '◀ LEFT';
+  btn.style.borderColor = window.rightHand ? 'rgba(112,192,240,0.6)' : 'rgba(240,223,112,0.5)';
+  btn.style.color = window.rightHand ? '#70c0f0' : '#f0df70';
+  // Flip spin labels: inside/outside swap sides with the shot
+  var spinTitle = document.querySelector('#spin-row').previousElementSibling;
+  var sBg=window.spinEnabled?'#3a7a3a':'#555';
+  var sState=window.spinEnabled?'ON':'OFF';
+  var sBtnStyle='float:right;margin-top:-2px;padding:2px 10px;border-radius:10px;border:none;font-family:Lato,sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;cursor:pointer;background:'+sBg+';color:#fff;';
+  var sBtn='<button id="spin-toggle" onclick="toggleSpin()" style="'+sBtnStyle+'">'+sState+'</button>';
+  spinTitle.innerHTML = window.rightHand
+    ? 'Spin — where the tip hits the cue ball &nbsp;·&nbsp; ← outside &nbsp;|&nbsp; inside → ' + sBtn
+    : 'Spin — where the tip hits the cue ball &nbsp;·&nbsp; ← inside &nbsp;|&nbsp; outside → ' + sBtn;
+  update();
+}
+window.rightHand = false;
 window.addEventListener('load',update);
+
+// Prevent page scroll while dragging any slider
+document.querySelectorAll('input[type=range]').forEach(function(sl){
+  sl.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+  sl.addEventListener('touchmove',  function(e){ e.stopPropagation(); e.preventDefault(); }, {passive:false});
+});
 
 if('serviceWorker' in navigator){
   var swBlob=new Blob([
@@ -441,13 +499,14 @@ if('serviceWorker' in navigator){
       <ol style="padding-left:20px;margin:0;">
         <li style="margin-bottom:10px;">Open <em>LeStar Z's Aimer</em> on your phone.</li>
         <li style="margin-bottom:10px;">Place the phone on or near the playing surface where you can see it easily.</li>
-        <li style="margin-bottom:10px;">Set up a cue ball and an object ball on the table in a typical shot. Start with an easy one.</li>
-        <li style="margin-bottom:10px;">Note the angle the object ball must travel after contact in order to reach the pocket.</li>
-        <li style="margin-bottom:10px;">With the phone behind the cue ball, move the <strong style="color:#e87030;">Cut Angle</strong> slider until the two balls in the upper graphic approximate that angle.</li>
-        <li style="margin-bottom:10px;">Study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle.</li>
+        <li style="margin-bottom:10px;">Set up a cue ball and an object ball on the table. Start with an easy shot.</li>
+        <li style="margin-bottom:10px;">Note the position of the object ball. Pick it up, and place the phone where it was, with the top graphic over that spot.</li>
+        <li style="margin-bottom:10px;">Make sure the phone is lined up with the line to the cue ball.</li>
+        <li style="margin-bottom:10px;">Move the <strong style="color:#e87030;">Cut Angle</strong> slider until the arrow in the upper graphic points to the pocket or other target.</li>
+        <li style="margin-bottom:10px;">Pick up the phone and put the object ball back on its spot. Then study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle.</li>
         <li style="margin-bottom:10px;">Step up to the shot and align the real cue ball and real object ball the same way the lower graphic shows.</li>
         <li style="margin-bottom:10px;">Shoot that same setup many times until you build a feel for what that alignment looks like on the table and what it produces.</li>
-        <li style="margin-bottom:0;">Only then begin adding the lower sliders — <strong style="color:#70c0f0;">Speed</strong>, <strong style="color:#e870b0;">Spin</strong>, and <strong style="color:#a0d0a0;">Distance</strong> — one at a time, then in combinations. Go slowly. Each one shifts your aim point, and you want to feel what each one does before combining them.</li>
+        <li style="margin-bottom:0;">Only then begin adding the lower sliders — <strong style="color:#70c0f0;">Speed</strong>, <strong style="color:#e870b0;">Spin</strong>, and <strong style="color:#a0d0a0;">Distance</strong> — one at a time, then in combinations. Go slowly. Each one shifts your aim point, and you want to feel what each one does before combining them. If you are consistently missing on one side or the other, you may want to put a compensation into your estimate of the correct angle through using the <strong style="color:#ddd;">Personal Bias</strong> slider.</li>
       </ol>
     </div>
 
@@ -465,6 +524,7 @@ if('serviceWorker' in navigator){
       <p style="margin-bottom:10px;"><strong style="color:#70c0f0;">Speed</strong> — how hard you hit the shot. Slower shots give friction more time to throw the ball off the geometric line. Fast shots reduce throw. Toggle OFF to see what speed alone is contributing.</p>
       <p style="margin-bottom:10px;"><strong style="color:#e870b0;">Spin</strong> — where the tip contacts the cue ball: left (inside) or right (outside). Side english adds its own throw and also causes squirt. Toggle OFF to isolate its effect.</p>
       <p><strong style="color:#a0d0a0;">Distance</strong> — how far the cue ball travels to reach the object ball. Squirt from english accumulates over distance. A half-tip barely matters at 6 inches but is significant at 6 feet. Toggle OFF to ignore it.</p>
+      <p style="margin-top:10px;"><strong style="color:#ddd;">Personal Bias</strong> — a correction for your own consistent error. If you find that following the app's aim point always leaves you undercutting the shot, slide Bias toward <em>thinner</em> to add degrees to your aim. If you overcut, slide toward <em>fuller</em>. Start with small adjustments — 2° to 4° — and test on a straight-in shot first, then on cut shots. The goal is not to rely on this forever: use it to build a feel for what the correct contact looks like, then reduce it as your eye improves.</p>
     </div>
 
     <!-- Definitions -->
