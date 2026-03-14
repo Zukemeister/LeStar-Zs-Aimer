@@ -491,8 +491,8 @@ window.addEventListener('load',update);
     var rh = window.rightHand === true;
     var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
     var aimF = rh ? (ocx - x) / (2*Rb) : (x - ocx) / (2*Rb);
-    aimF = Math.max(0, Math.min(0.9999, aimF));
-    var slVal = Math.round(Math.asin(aimF) / (Math.PI/2) * 100);
+    aimF = Math.max(0, Math.min(1.0, aimF));
+    var slVal = aimF >= 1.0 ? 100 : Math.round(Math.asin(aimF) / (Math.PI/2) * 100);
     return Math.max(0, Math.min(100, slVal));
   }
 
@@ -501,7 +501,7 @@ window.addEventListener('load',update);
     var rh = window.rightHand === true;
     var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
     var ccx = rh ? ocx - d.aimFraction*2*Rb : ocx + d.aimFraction*2*Rb;
-    return Math.abs(x - ccx) < Rb * 2.2;
+    return Math.abs(x - ccx) < Rb * 0.7;
   }
 
   overlay.addEventListener('touchstart', function(e){
@@ -581,7 +581,7 @@ if('serviceWorker' in navigator){
         <li style="margin-bottom:10px;">Note the position of the object ball. Pick it up, and place the phone where it was, with the top graphic over that spot.</li>
         <li style="margin-bottom:10px;">Make sure the phone is lined up with the line to the cue ball.</li>
         <li style="margin-bottom:10px;">Move the <strong style="color:#e87030;">Cut Angle</strong> slider until the arrow in the upper graphic points to the pocket or other target.</li>
-        <li style="margin-bottom:10px;">Pick up the phone and put the object ball back on its spot. Then study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle.</li>
+        <li style="margin-bottom:10px;">Pick up the phone and put the object ball back on its spot. Then study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle. You can also change this angle by dragging the cue ball in the lower graphic.</li>
         <li style="margin-bottom:10px;">Step up to the shot and align the real cue ball and real object ball the same way the lower graphic shows.</li>
         <li style="margin-bottom:10px;">Shoot that same setup many times until you build a feel for what that alignment looks like on the table and what it produces.</li>
         <li style="margin-bottom:0;">Only then begin adding the lower sliders — <strong style="color:#70c0f0;">Speed</strong>, <strong style="color:#e870b0;">Spin</strong>, and <strong style="color:#a0d0a0;">Distance</strong> — one at a time, then in combinations. Go slowly. Each one shifts your aim point, and you want to feel what each one does before combining them. If you are consistently missing on one side or the other, you may want to put a compensation into your estimate of the correct angle through using the <strong style="color:#ddd;">Personal Bias</strong> slider.</li>
