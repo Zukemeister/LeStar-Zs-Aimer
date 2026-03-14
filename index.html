@@ -32,7 +32,7 @@ h1 { display:flex; align-items:center; justify-content:center; line-height:1; ma
 .slbl { font-size:11px; color:#e8e8e8; min-width:62px; font-weight:700; }
 .sval { font-size:15px; font-weight:900; min-width:76px; text-align:right; white-space:nowrap; }
 .orange{color:#e87030;} .blue{color:#70c0f0;} .pink{color:#e870b0;} .yellow{color:#f0df70;} .green{color:#88ee88;}
-input[type=range] { flex:1; -webkit-appearance:none; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; outline:none; touch-action:pan-x; }
+input[type=range] { flex:1; -webkit-appearance:none; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; outline:none; touch-action:none; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid #1a361a; box-shadow:0 1px 5px rgba(0,0,0,0.5); }
 #sl-cut::-webkit-slider-thumb   { background:#e87030; width:30px; height:30px; }
 #sl-cut { height:8px; }
@@ -105,6 +105,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
              letter-spacing:0.06em;cursor:pointer;line-height:1.2;">
       ◀ LEFT
     </button>
+    <button id="table-btn" onclick="toggleTable()"
+      style="position:absolute;right:0;bottom:-22px;
+             padding:3px 9px;border-radius:12px;
+             border:1px solid rgba(160,208,160,0.4);
+             background:rgba(160,208,160,0.08);color:#a0d0a0;
+             font-family:'Lato',sans-serif;font-size:10px;font-weight:900;
+             letter-spacing:0.06em;cursor:pointer;line-height:1.2;">
+      POOL
+    </button>
     <h1><span class="t-lestar">LeStar&nbsp;</span><span class="t-z">Z</span><span class="t-rest">'s Aimer</span></h1>
     <p class="sub">Set the angle you want · adjust for speed & spin · one aim point</p>
   </div>
@@ -165,7 +174,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <span class="slbl">Distance</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:right">near</span>
         <input type="range" id="sl-dist" min="0" max="100" value="25" step="1">
-        <span style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:left">far</span>
+        <span id="dist-far-lbl" style="font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;min-width:28px;text-align:left">far</span>
         <span class="sval" id="v-dist" style="color:rgba(255,255,255,0.7)">2 ft</span>
       </div>
     </div>
@@ -220,7 +229,7 @@ function compute(){
   var spin = (window.spinEnabled!==false) ? Math.round((spinRaw/100)*8)-4 : 0;
   // Map 0-100 → 0.5 to 9 feet
   var distRaw=parseInt(document.getElementById('sl-dist').value);
-  var distFt=0.5+(distRaw/100)*8.5;
+  var distFt=0.5+(distRaw/100)*(window.snooker?13.5:8.5);
   var distIn=distFt*12;
   var distEnabled=window.distEnabled!==false;
   var biasRaw=parseInt(document.getElementById('sl-bias').value);
@@ -453,12 +462,22 @@ function toggleHand(){
   update();
 }
 window.rightHand = false;
+window.snooker = false;
+function toggleTable(){
+  window.snooker = !window.snooker;
+  var btn = document.getElementById('table-btn');
+  btn.textContent = window.snooker ? 'SNOOKER' : 'POOL';
+  btn.style.borderColor = window.snooker ? 'rgba(112,192,240,0.5)' : 'rgba(160,208,160,0.4)';
+  btn.style.color = window.snooker ? '#70c0f0' : '#a0d0a0';
+  // Update distance slider max label
+  document.getElementById('dist-far-lbl').textContent = window.snooker ? '14ft' : '9ft';
+  update();
+}
 window.addEventListener('load',update);
 
 // Prevent page scroll while dragging any slider
 document.querySelectorAll('input[type=range]').forEach(function(sl){
   sl.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
-  sl.addEventListener('touchmove',  function(e){ e.stopPropagation(); e.preventDefault(); }, {passive:false});
 });
 
 if('serviceWorker' in navigator){
