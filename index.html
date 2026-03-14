@@ -127,6 +127,23 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       <!-- viewBox height increased to 338 to give badge room below fraction labels -->
       <svg id="botsvg" viewBox="0 0 460 338" preserveAspectRatio="xMidYMid meet"></svg>
       <div id="bot-overlay" style="position:absolute;inset:0;z-index:10;touch-action:none;cursor:grab;"></div>
+      <!-- Nudge buttons inside the graphic, bottom-right, above overlay -->
+      <div style="position:absolute;bottom:8%;right:2%;z-index:20;display:flex;gap:4px;">
+        <button id="cut-minus" onclick="nudgeCut(-1)"
+          style="width:11%;min-width:38px;max-width:52px;aspect-ratio:1;
+                 border-radius:7px;border:1.5px solid #e87030;
+                 background:rgba(20,20,20,0.75);color:#e87030;
+                 font-family:'Lato',sans-serif;font-size:20px;font-weight:900;
+                 cursor:pointer;line-height:1;touch-action:manipulation;
+                 display:flex;align-items:center;justify-content:center;">−</button>
+        <button id="cut-plus" onclick="nudgeCut(+1)"
+          style="width:11%;min-width:38px;max-width:52px;aspect-ratio:1;
+                 border-radius:7px;border:1.5px solid #e87030;
+                 background:rgba(20,20,20,0.75);color:#e87030;
+                 font-family:'Lato',sans-serif;font-size:20px;font-weight:900;
+                 cursor:pointer;line-height:1;touch-action:manipulation;
+                 display:flex;align-items:center;justify-content:center;">+</button>
+      </div>
     </div>
   </div>
 
@@ -137,6 +154,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <input type="range" id="sl-cut" min="0" max="100" value="0" step="1">
         <span class="sval orange" id="v-cut">0°</span>
       </div>
+
     </div>
     <div class="readout">
       <div class="ri"><div class="ri-lbl">Aim point</div><div class="ri-val orange" id="r-aim">0%</div></div>
@@ -222,7 +240,9 @@ function fracStr(hf){
 }
 
 function compute(){
-  var cutRaw=parseInt(document.getElementById('sl-cut').value)/100;
+  // Use cutDeg as source of truth if set; fall back to slider
+  var cutDeg = (window.cutDeg !== undefined) ? window.cutDeg : Math.asin(parseInt(document.getElementById('sl-cut').value)/100) * DEG;
+  var cutRaw = cutDeg >= 90 ? 1.0 : Math.sin(cutDeg * RAD);
   // Map 0-100 → speed level 1-5
   var speedRaw=parseInt(document.getElementById('sl-speed').value);
   var speed = (window.speedEnabled!==false) ? Math.min(5,Math.floor(speedRaw/100*5)+1) : 3; // 3=medium when off
@@ -391,6 +411,12 @@ function drawBot(d){
 }
 
 function update(){
+  // Sync cutDeg from slider ONLY when slider was moved directly (not from nudge or drag)
+  if(!window._nudging){
+    var slVal = parseInt(document.getElementById('sl-cut').value);
+    window.cutDeg = slVal >= 100 ? 90 : Math.asin(slVal/100) * DEG;
+  }
+  window._nudging = false;
   var d=compute();
   drawTop(d); drawBot(d);
   var Zdeg=Math.round(d.Z_des*DEG);
@@ -432,10 +458,10 @@ document.getElementById('sl-speed').addEventListener('input',update);
 document.getElementById('sl-spin').addEventListener('input',update);
 document.getElementById('sl-dist').addEventListener('input',update);
 
-window.distEnabled  = true;
-window.speedEnabled = true;
-window.spinEnabled  = true;
-window.biasEnabled  = true;
+window.distEnabled  = false;
+window.speedEnabled = false;
+window.spinEnabled  = false;
+window.biasEnabled  = false;
 
 function setToggle(id, rowId, enabled){
   var btn=document.getElementById(id);
@@ -446,6 +472,16 @@ function setToggle(id, rowId, enabled){
 function toggleSpeed(){ window.speedEnabled=!window.speedEnabled; setToggle('speed-toggle','speed-row',window.speedEnabled); update(); }
 function toggleSpin(){  window.spinEnabled =!window.spinEnabled;  setToggle('spin-toggle', 'spin-row', window.spinEnabled);  update(); }
 function toggleDist(){  window.distEnabled =!window.distEnabled;  setToggle('dist-toggle', 'dist-row', window.distEnabled);  update(); }
+// Track cut angle in degrees directly to avoid rounding errors
+window.cutDeg = 0;
+
+function nudgeCut(delta){
+  window.cutDeg = Math.max(0, Math.min(90, window.cutDeg + delta));
+  var sl = document.getElementById('sl-cut');
+  sl.value = window.cutDeg >= 90 ? 100 : Math.round(Math.sin(window.cutDeg * RAD) * 100);
+  window._nudging = true;
+  update();
+}
 function toggleBias(){  window.biasEnabled =!window.biasEnabled;  setToggle('bias-toggle','bias-row',window.biasEnabled);  update(); }
 function toggleHand(){
   window.rightHand = !window.rightHand;
@@ -476,7 +512,13 @@ function toggleTable(){
   document.getElementById('dist-far-lbl').textContent = window.snooker ? '14ft' : '9ft';
   update();
 }
-window.addEventListener('load',update);
+window.addEventListener('load',function(){
+  setToggle('speed-toggle','speed-row',false);
+  setToggle('spin-toggle', 'spin-row', false);
+  setToggle('dist-toggle', 'dist-row', false);
+  setToggle('bias-toggle', 'bias-row', false);
+  update();
+});
 
 // ── Draggable cue ball in bottom view ───────────────────────
 (function(){
@@ -586,7 +628,7 @@ if('serviceWorker' in navigator){
         <li style="margin-bottom:10px;">Note the position of the object ball. Pick it up, and place the phone where it was, with the top graphic over that spot.</li>
         <li style="margin-bottom:10px;">Make sure the phone is lined up with the line to the cue ball.</li>
         <li style="margin-bottom:10px;">Move the <strong style="color:#e87030;">Cut Angle</strong> slider until the arrow in the upper graphic points to the pocket or other target.</li>
-        <li style="margin-bottom:10px;">Pick up the phone and put the object ball back on its spot. Then study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle. You can also change this angle by dragging the cue ball in the lower graphic.</li>
+        <li style="margin-bottom:10px;">Pick up the phone and put the object ball back on its spot. Then study the lower graphic — it shows you exactly where the inside edge of the cue ball needs to be placed against the object ball to produce that angle, or drag the cue ball in the lower graphic to approximately the correct angle, and use the plus and minus controls for precision.</li>
         <li style="margin-bottom:10px;">Step up to the shot and align the real cue ball and real object ball the same way the lower graphic shows.</li>
         <li style="margin-bottom:10px;">Shoot that same setup many times until you build a feel for what that alignment looks like on the table and what it produces.</li>
         <li style="margin-bottom:0;">Only then begin adding the lower sliders — <strong style="color:#70c0f0;">Speed</strong>, <strong style="color:#e870b0;">Spin</strong>, and <strong style="color:#a0d0a0;">Distance</strong> — one at a time, then in combinations. Go slowly. Each one shifts your aim point, and you want to feel what each one does before combining them. If you are consistently missing on one side or the other, you may want to put a compensation into your estimate of the correct angle through using the <strong style="color:#ddd;">Personal Bias</strong> slider.</li>
