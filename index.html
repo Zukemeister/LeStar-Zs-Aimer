@@ -128,20 +128,22 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       <svg id="botsvg" viewBox="0 0 460 338" preserveAspectRatio="xMidYMid meet"></svg>
       <div id="bot-overlay" style="position:absolute;inset:0;z-index:10;touch-action:none;cursor:grab;"></div>
       <!-- Nudge buttons inside the graphic, bottom-right, above overlay -->
-      <div style="position:absolute;bottom:8%;right:2%;z-index:20;display:flex;gap:4px;">
+      <div style="position:absolute;bottom:1%;right:2%;z-index:20;display:flex;gap:12px;">
         <button id="cut-minus" onclick="nudgeCut(-1)"
-          style="width:11%;min-width:38px;max-width:52px;aspect-ratio:1;
-                 border-radius:7px;border:1.5px solid #e87030;
-                 background:rgba(20,20,20,0.75);color:#e87030;
-                 font-family:'Lato',sans-serif;font-size:20px;font-weight:900;
+          style="width:56px;height:56px;
+                 border-radius:10px;border:2px solid #e87030;
+                 background:rgba(20,20,20,0.82);color:#e87030;
+                 font-family:'Lato',sans-serif;font-size:28px;font-weight:900;
                  cursor:pointer;line-height:1;touch-action:manipulation;
+                 -webkit-tap-highlight-color:transparent;
                  display:flex;align-items:center;justify-content:center;">−</button>
         <button id="cut-plus" onclick="nudgeCut(+1)"
-          style="width:11%;min-width:38px;max-width:52px;aspect-ratio:1;
-                 border-radius:7px;border:1.5px solid #e87030;
-                 background:rgba(20,20,20,0.75);color:#e87030;
-                 font-family:'Lato',sans-serif;font-size:20px;font-weight:900;
+          style="width:56px;height:56px;
+                 border-radius:10px;border:2px solid #e87030;
+                 background:rgba(20,20,20,0.82);color:#e87030;
+                 font-family:'Lato',sans-serif;font-size:28px;font-weight:900;
                  cursor:pointer;line-height:1;touch-action:manipulation;
+                 -webkit-tap-highlight-color:transparent;
                  display:flex;align-items:center;justify-content:center;">+</button>
       </div>
     </div>
@@ -402,11 +404,18 @@ function drawBot(d){
     out+='<rect x="'+(bx-40)+'" y="'+(ocy+r+38)+'" width="80" height="34" rx="7" fill="#e87030"/>';
     out+='<text x="'+bx+'" y="'+(ocy+r+60)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="white">'+aimP+'%</text>';
   } else {
-    var hintX=rh?(ocx-r-80):(ocx+r+80);
-    out+='<text x="'+hintX+'" y="'+(ocy+5)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">drag cut angle → to begin</text>';
+    if(rh){
+      // Right-hand: object ball on right, cue ball drags from left — hint left of ball
+      var hintX = (W-BOT_OCX)-Rb-70;
+      out+='<text x="'+hintX+'" y="'+(ocy+5)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="13" font-weight="700" fill="rgba(255,255,255,0.4)">◄ Drag to begin</text>';
+    } else {
+      // Left-hand: object ball on left, cue ball drags from right — hint right of ball
+      var hintX = BOT_OCX+Rb+24;
+      out+='<text x="'+hintX+'" y="'+(ocy+5)+'" text-anchor="start" font-family="Lato,sans-serif" font-size="13" font-weight="700" fill="rgba(255,255,255,0.4)">Drag ▶ to begin</text>';
+    }
   }
 
-  out+='<text x="'+(W-8)+'" y="'+(H-8)+'" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">EYE LEVEL</text>';
+  out+='<text x="'+(W-8)+'" y="18" text-anchor="end" font-family="Lato,sans-serif" font-size="8" font-weight="700" letter-spacing="0.12em" fill="rgba(255,255,255,0.25)">EYE LEVEL</text>';
   document.getElementById('botsvg').innerHTML=out;
 }
 
