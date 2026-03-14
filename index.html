@@ -126,6 +126,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
     <div class="svg-box bot-box">
       <!-- viewBox height increased to 338 to give badge room below fraction labels -->
       <svg id="botsvg" viewBox="0 0 460 338" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="bot-overlay" style="position:absolute;inset:0;z-index:10;touch-action:none;cursor:grab;"></div>
     </div>
   </div>
 
@@ -474,6 +475,64 @@ function toggleTable(){
   update();
 }
 window.addEventListener('load',update);
+
+// ── Draggable cue ball in bottom view ───────────────────────
+(function(){
+  var overlay = document.getElementById('bot-overlay');
+  var dragging = false;
+
+  function svgX(e){
+    var rect = overlay.getBoundingClientRect();
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return (clientX - rect.left) / rect.width * 460;
+  }
+
+  function xToSlider(x){
+    var rh = window.rightHand === true;
+    var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
+    var aimF = rh ? (ocx - x) / (2*Rb) : (x - ocx) / (2*Rb);
+    aimF = Math.max(0, Math.min(0.9999, aimF));
+    var slVal = Math.round(Math.asin(aimF) / (Math.PI/2) * 100);
+    return Math.max(0, Math.min(100, slVal));
+  }
+
+  function nearBall(x){
+    var d = compute();
+    var rh = window.rightHand === true;
+    var ocx = rh ? (460 - BOT_OCX) : BOT_OCX;
+    var ccx = rh ? ocx - d.aimFraction*2*Rb : ocx + d.aimFraction*2*Rb;
+    return Math.abs(x - ccx) < Rb * 2.2;
+  }
+
+  overlay.addEventListener('touchstart', function(e){
+    var x = svgX(e);
+    if(nearBall(x)){
+      dragging = true;
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  overlay.addEventListener('touchmove', function(e){
+    if(!dragging) return;
+    e.preventDefault();
+    document.getElementById('sl-cut').value = xToSlider(svgX(e));
+    update();
+  }, {passive:false});
+
+  overlay.addEventListener('touchend',   function(){ dragging=false; }, {passive:true});
+  overlay.addEventListener('touchcancel',function(){ dragging=false; }, {passive:true});
+
+  // Mouse fallback for desktop
+  overlay.addEventListener('mousedown', function(e){
+    if(nearBall(svgX(e))){ dragging=true; e.preventDefault(); }
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!dragging) return;
+    document.getElementById('sl-cut').value = xToSlider(svgX(e));
+    update();
+  });
+  document.addEventListener('mouseup', function(){ dragging=false; });
+})();
 
 // Prevent page scroll while dragging any slider
 document.querySelectorAll('input[type=range]').forEach(function(sl){
