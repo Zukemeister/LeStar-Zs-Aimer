@@ -286,8 +286,9 @@ function drawTop(d){
   var W=460, H=210, r=Rt;
   var sinA=Math.sin(d.Z_des), cosA=Math.cos(d.Z_des);
   var ocx=TOP_OCX, ocy=72+sinA*22;
-  var ccx=ocx+sinA*2*r, ccy=ocy+cosA*2*r;
-  var ux=-sinA, uy=-cosA;
+  var rh=window.rightHand===true;
+  var ccx=rh ? ocx-sinA*2*r : ocx+sinA*2*r, ccy=ocy+cosA*2*r;
+  var ux=rh ? sinA : -sinA, uy=-cosA;
   var tail=[ccx-ux*50, ccy-uy*50];
   var head=clipToBox(ocx,ocy, ocx+ux*130, ocy+uy*130, W,H,6);
   var arcR=34, Zdeg=Math.round(d.Z_des*DEG);
@@ -300,15 +301,16 @@ function drawTop(d){
   // Arc + angle label
   if(sinA>0.025){
     var arcEndX=ocx+ux*arcR, arcEndY=ocy+uy*arcR;
-    out+='<path d="M'+ocx+','+(ocy-arcR)+' A'+arcR+','+arcR+' 0 0,0 '+arcEndX+','+arcEndY+'" fill="none" stroke="#e87030" stroke-width="2"/>';
-    out+='<text x="'+(ocx+ux*arcR*0.52-18)+'" y="'+(ocy+uy*arcR*0.52-4)+'" font-family="Lato,sans-serif" font-size="13" font-weight="900" fill="#e87030">'+Zdeg+'°</text>';
+    var sweep=rh?'1':'0';
+    out+='<path d="M'+ocx+','+(ocy-arcR)+' A'+arcR+','+arcR+' 0 0,'+sweep+' '+arcEndX+','+arcEndY+'" fill="none" stroke="#e87030" stroke-width="2"/>';
+    out+='<text x="'+(ocx+ux*arcR*0.52+(rh?4:-18))+'" y="'+(ocy+uy*arcR*0.52-4)+'" font-family="Lato,sans-serif" font-size="13" font-weight="900" fill="#e87030">'+Zdeg+'°</text>';
   }
   // Cue ball first (underneath), then red ball on top
   out+='<circle cx="'+ccx+'" cy="'+ccy+'" r="'+r+'" fill="url(#CGT)" stroke="#aaa" stroke-width="1.2"/>';
   out+='<circle cx="'+ocx+'" cy="'+ocy+'" r="'+r+'" fill="url(#OGT)" stroke="#7a1010" stroke-width="1.2"/>';
 
-  // Orange cut angle badge — bottom-left, mirrors % badge position in bottom view
-  var badgeX=44, badgeY=H-14;
+  // Badge mirrors hand direction
+  var badgeX=rh?(W-44):44, badgeY=H-14;
   out+='<rect x="'+(badgeX-40)+'" y="'+(badgeY-26)+'" width="80" height="34" rx="7" fill="#e87030"/>';
   out+='<text x="'+badgeX+'" y="'+(badgeY-4)+'" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="white">'+Zdeg+'°</text>';
 
